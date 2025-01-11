@@ -1,0 +1,16 @@
+# VScode
+.vscode
+
+# pycache
+**/__pycache__/**
+
+# data
+data/*
+!data/temp.txt
+
+# saved
+saved/*
+!saved/temp.txt
+
+# Virtual Environment
+.venv/
