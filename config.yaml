@@ -1,0 +1,25 @@
+expr: Experiment
+
+device: cuda
+
+data:
+  dataset: MNIST
+  mode: train # should consider train or test!
+
+model:
+  name: DDPM
+  latent_size: 100
+  x_size: [1, 28, 28]
+
+loss_fn: ELBO
+ 
+hyperparams:
+  optim: Adam
+  lr: 0.0002
+  weight_decay: ~
+  epochs: 100
+  batch_size: 16
+
+save_path: saved
+
+load_weights: vae.mnist.050epochs.pth
