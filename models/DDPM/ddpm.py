@@ -33,13 +33,20 @@ class DDPM(nn.Module):
         return torch.linspace(start, end, time_steps)
     
     def _algorithm_1(self, x_0):
+        # [1] Repeat
+        # [2] x_0 ~ q(x_0)
+        
+        # [3] t ~ Uniform({1, ..., T})
         # Sampling t from Uniform dist, without 0
         # Because x_0 prediction needs discerete decoder.
         bz = x_0.shape[0] # Batch Size
         t = torch.randint(1, self.time_steps, (bz,), device=x.device)
         
-        noise = torch.rand_like(x_0) # noise; eps
-        # START IMPLEMENTATION HERE!!
+        # [4] Noise(Epsilon) ~ N(0,I)
+        noise = torch.randn_like(x_0) # I = Identity matrix(Covariance Matrix)
+        
+        # [5] Get Loss
+        # [5.1] Get Noise_{theta}; x_t=sqrt{bar{alpha_t}x_0+sqrt{1-bar{alpha_t}}epsilon
     
     def forward(self, x):
         self._algorithm_1(x_0)
