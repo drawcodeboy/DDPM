@@ -2,6 +2,8 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+from einops import reduce
+
 from .unet import UNet
 
 class DDPM(nn.Module):
@@ -54,8 +56,12 @@ class DDPM(nn.Module):
         # because the purpose of Time Embedding is to maintain relative differences, 
         # i.e., the "INTERVAL AND SCALE EQUIVALENCE," rather than 
         # requiring exact corresponding values for each step.
+        
+        # But, I actually range of torch.randint() is [1, 999].
+        # This is because, 3.3 in DDPM Paper, L_0 is discrete decoder has to deal with it.
+        # So, I didn't sampling time step 1.
         bz = x_0.shape[0] # Batch Size
-        t = torch.randint(0, self.time_steps, (bz,), device=x_0.device, dtype=torch.int64) # [0, self.time_steps - 1]
+        t = torch.randint(1, self.time_steps, (bz,), device=x_0.device, dtype=torch.int64) # [0, self.time_steps - 1]
         
         # [4] Noise(Epsilon) ~ N(0,I)
         noise = torch.randn_like(x_0) # I = Identity matrix(Covariance Matrix)
@@ -71,8 +77,25 @@ class DDPM(nn.Module):
         x_t = x_0_coef * x_0 + noise_coef * noise
         # [5.2] model(U-Net) output
         noise_pred = self.model(x_t, t)
+        # [5.3] loss
+        loss = F.mse_loss(noise_pred, noise, reduction='none')
+        loss = reduce(loss, 'b ... -> b', 'mean') # >> consider loss_weight... so I get mean twice.
+        
+        return loss.mean(), x_t
+    
+    def view(self, x_0):
+        # view forward process
+        noise = torch.randn_like(x_0)
+        noise = F.sigmoid(noise) # for visualize, scaling [0, 1]
+        
+        x_0_coef = self.sqrt_alphas_cumprod.reshape(-1, 1, 1, 1)
+        noise_coef = self.sqrt_one_minus_alphas_cumprod.reshape(-1, 1, 1, 1)
+        
+        x_t = x_0_coef * x_0 + noise_coef * noise
+        x_t = torch.clamp(x_t, min=0., max=1.)
+        return x_t
     
     def forward(self, x_0):
-        self._algorithm_1(x_0)
+        loss, x_t = self._algorithm_1(x_0)
 
-        return x_0
+        # return loss, x_t

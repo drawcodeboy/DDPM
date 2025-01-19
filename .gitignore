@@ -14,3 +14,9 @@ saved/*
 
 # Virtual Environment
 .venv/
+
+# Study list
+study.txt
+
+# samples
+samples/
