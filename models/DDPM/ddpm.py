@@ -2,6 +2,8 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+from .unet import UNet
+
 class DDPM(nn.Module):
     def __init__(self,
                  time_steps: int = 1000,
@@ -27,6 +29,9 @@ class DDPM(nn.Module):
         # 3) Time Step Settings
         self.time_steps = time_steps
         
+        # 4) Get Model (U-Net)
+        self.model = UNet()
+        
     def _beta_linear_schedule(self, time_steps):
         start, end = 0.0001, 0.02
         
@@ -45,6 +50,10 @@ class DDPM(nn.Module):
         # during value extraction using gather, AN INDEX OF 0 CORRESPONDS TO A TIME STEP OF 1. 
         # This is a common trick, but due to the complexity of the implementation, 
         # it may cause confusion, so this comment is added for clarity.
+        # When creating Time Embeddings, it's still fine to input 0 for time step 1 
+        # because the purpose of Time Embedding is to maintain relative differences, 
+        # i.e., the "INTERVAL AND SCALE EQUIVALENCE," rather than 
+        # requiring exact corresponding values for each step.
         bz = x_0.shape[0] # Batch Size
         t = torch.randint(0, self.time_steps, (bz,), device=x_0.device, dtype=torch.int64) # [0, self.time_steps - 1]
         
@@ -61,14 +70,9 @@ class DDPM(nn.Module):
         
         x_t = x_0_coef * x_0 + noise_coef * noise
         # [5.2] model(U-Net) output
-        print(t.shape, x_t.shape)
+        noise_pred = self.model(x_t, t)
     
     def forward(self, x_0):
         self._algorithm_1(x_0)
 
         return x_0
-
-if __name__ == '__main__':
-    model = DDPM()
-    
-    time_steps = model(torch.randn(4, 3, 16, 16))
