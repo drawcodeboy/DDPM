@@ -84,7 +84,7 @@ class DDPM(nn.Module):
         return loss.mean(), x_t
     
     def view(self, x_0):
-        # view forward process
+        # view forward or reverse process (that depends on post-processing)
         noise = torch.randn_like(x_0)
         noise = F.sigmoid(noise) # for visualize, scaling [0, 1]
         
@@ -92,7 +92,7 @@ class DDPM(nn.Module):
         noise_coef = self.sqrt_one_minus_alphas_cumprod.reshape(-1, 1, 1, 1)
         
         x_t = x_0_coef * x_0 + noise_coef * noise
-        x_t = torch.clamp(x_t, min=0., max=1.)
+        x_t = torch.clamp(x_t, min=0., max=1.) # for visualize, min-max clamp
         return x_t
     
     def forward(self, x_0):

@@ -1,17 +1,23 @@
 import torch
 
-from models import load_model
-from datasets import load_dataset
+import sys, os
 
 import cv2
 import numpy as np
 from einops import rearrange
-import sys, os
 import yaml
+import argparse
+
+from models import load_model
+from datasets import load_dataset
 
 with open('config.yaml') as f:
     cfg = yaml.full_load(f)
 model_cfg = cfg['model']
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--steps', type=int, default=1)
+args = parser.parse_args()
 
 model = load_model(**model_cfg)
 
@@ -35,6 +41,8 @@ for idx, x in enumerate(x_t, start=1):
     cv2.imwrite(f'./samples/sample_{idx:04d}.jpg', x)
 
 img_path_li = [os.path.join('./samples', path) for path in os.listdir('./samples')]
+
+img_path_li = img_path_li[::args.steps]
 
 idx = 0
 while True:
