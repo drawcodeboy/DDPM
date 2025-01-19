@@ -8,11 +8,9 @@ data:
 
 model:
   name: DDPM
-  latent_size: 100
-  x_size: [1, 28, 28]
+  time_steps: 1000
+  beta_schedule: linear
 
-loss_fn: ELBO
- 
 hyperparams:
   optim: Adam
   lr: 0.0002
@@ -22,4 +20,4 @@ hyperparams:
 
 save_path: saved
 
-load_weights: vae.mnist.050epochs.pth
+load_weights: 
