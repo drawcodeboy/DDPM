@@ -39,9 +39,22 @@ class DDPM(nn.Module):
         
         return torch.linspace(start, end, time_steps) # [start, ..., end], includes end
     
-    def _algorithm_1(self, x_0):
+    def _normalize(self, x):
+        # DDPM needs [-1, 1] scale input, it is related to All process performs N(0,I)
+        # Mostly, Image data is normalized [0, 1]. So, I re-scaled [0, 1] to [-1, 1]
+        return (x * 2) - 1
+    
+    def _unnormalize(self, x):
+        # reconstruct scale [-1, 1] to [0, 1]
+        return (x + 1) * 0.5
+    
+    def algorithm1(self, x_0):
+        # Training
+        
         # [1] Repeat
+        
         # [2] x_0 ~ q(x_0)
+        x_0 = self._normalize(x_0) # scale: [0, 1] -> [-1, 1], this code is not related to [2], just pre-processing.
         
         # [3] t ~ Uniform({1, ..., T})
         # Sampling t from Uniform dist, without 0
@@ -81,8 +94,23 @@ class DDPM(nn.Module):
         loss = F.mse_loss(noise_pred, noise, reduction='none')
         loss = reduce(loss, 'b ... -> b', 'mean') # >> consider loss_weight... so I get mean twice.
         
-        return loss.mean(), x_t
+        return loss.mean()
     
+    @torch.inference_mode()
+    def algorithm_2(self):
+        '''
+            Usage: model.algorithm2()
+        '''
+        # Sampling
+        
+        # [1] x_T ~ N(0, I)
+        # START IMPELEMENTATION HERE!
+        
+    def forward(self, x_0):
+        loss = self.algorithm1(x_0)
+
+        return loss
+        
     def view(self, x_0):
         # view forward or reverse process (that depends on post-processing)
         noise = torch.randn_like(x_0)
@@ -94,8 +122,3 @@ class DDPM(nn.Module):
         x_t = x_0_coef * x_0 + noise_coef * noise
         x_t = torch.clamp(x_t, min=0., max=1.) # for visualize, min-max clamp
         return x_t
-    
-    def forward(self, x_0):
-        loss, x_t = self._algorithm_1(x_0)
-
-        # return loss, x_t
