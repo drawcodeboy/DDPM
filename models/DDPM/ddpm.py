@@ -9,7 +9,8 @@ from .unet import UNet
 class DDPM(nn.Module):
     def __init__(self,
                  time_steps: int = 1000,
-                 beta_schedule: str = 'linear'):
+                 beta_schedule: str = 'linear',
+                 device: str = 'cuda'):
         super().__init__()
         
         # 1) Alpha & Beta Settings
@@ -21,18 +22,28 @@ class DDPM(nn.Module):
         alphas = 1. - betas
         alphas_cumprod = torch.cumprod(alphas, dim=0) # Cumulative Product
         
+        self.register_buffer('alphas', alphas)
         self.register_buffer('betas', betas)
         self.register_buffer('alphas_cumprod', alphas_cumprod)
         
-        # 2) Coefficients Using Alpha & Beta
-        self.register_buffer('sqrt_alphas_cumprod', torch.sqrt(alphas_cumprod))
-        self.register_buffer('sqrt_one_minus_alphas_cumprod', torch.sqrt(1.-alphas_cumprod))
+        # 2.1) Coefficients Using Alpha & Beta
+        self.register_buffer('sqrt_alphas_cumprod', torch.sqrt(alphas_cumprod)) # Used in Algorithm 1
+        self.register_buffer('sqrt_one_minus_alphas_cumprod', torch.sqrt(1.-alphas_cumprod)) # Used in Algorithm 1, 2
+        self.register_buffer('sqrt_alphas', torch.sqrt(alphas)) # Used in Algorithm 2
+        self.register_buffer('one_minus_alphas', betas) # Used in Algorithm 2
+        
+        # 2.2) Variance
+        alphas_cumprod_prev = F.pad(alphas_cumprod[:-1], (1, 0), value=1.)
+        self.register_buffer('variance', ((1.-alphas_cumprod_prev)/(1.-alphas_cumprod))*self.betas)
         
         # 3) Time Step Settings
         self.time_steps = time_steps
         
         # 4) Get Model (U-Net)
         self.model = UNet()
+        
+        # Extra
+        self.device = device
         
     def _beta_linear_schedule(self, time_steps):
         start, end = 0.0001, 0.02
@@ -54,7 +65,7 @@ class DDPM(nn.Module):
         # [1] Repeat
         
         # [2] x_0 ~ q(x_0)
-        x_0 = self._normalize(x_0) # scale: [0, 1] -> [-1, 1], this code is not related to [2], just pre-processing.
+        x_0 = self._normalize(x_0) # scale: [0, 1] -> [-1, 1], this code is not related to this part[2], just pre-processing.
         
         # [3] t ~ Uniform({1, ..., T})
         # Sampling t from Uniform dist, without 0
@@ -95,16 +106,55 @@ class DDPM(nn.Module):
         loss = reduce(loss, 'b ... -> b', 'mean') # >> consider loss_weight... so I get mean twice.
         
         return loss.mean()
+
+    @torch.inference_mode()
+    def sample(self, x_t, t):
+        '''
+            t: int, in algorithm_2 for statement
+        '''
+        # [3] z ~ N(0, I)
+        z = torch.randn_like(x_t)
+        
+        # [4] get x_{t-1}
+        t_ = torch.full((x_t.shape[0],), t, device=self.device, dtype=torch.int64)
+        noise_pred = self.model(x_t, t_)
+        x_t_minus_one = (1/self.sqrt_alphas[t]) * (x_t-(self.one_minus_alphas[t]/self.sqrt_one_minus_alphas_cumprod[t])*noise_pred)
+        x_t_minus_one += self.variance * noise
+        
+        return x_t_minus_one
     
     @torch.inference_mode()
-    def algorithm_2(self):
+    def algorithm_2(self, shape, get_all_timesteps=False):
         '''
             Usage: model.algorithm2()
+            shape: output.shape you want. if shape is [4, 3, 128, 128], 4 images that [3, 128, 128] shape.
         '''
         # Sampling
         
         # [1] x_T ~ N(0, I)
-        # START IMPELEMENTATION HERE!
+        x_T = torch.randn(shape, device = self.device)
+        
+        all_timesteps = [torch.clamp(x_T, -1., 1.)] # for visualize, torch.clamp()
+        
+        # [2] for t = T,...,1 do (without 1)
+        x_t = None
+        for t in range(self.time_steps-1, 1, -1): # [self.timesteps-1, 2], time step 1 for discrete decoder.
+            # [3], [4] sampling z, and get x_{t-1}
+            if t == self.time_steps - 1:
+                x_t = self.sample(x_T, t)
+            else:
+                x_t = self.sample(x_t, t)
+            
+            all_timesteps.append(x_t)
+        
+        # [5] end for, [6] return x_0 (x_1 for discrete decoder)
+        if not get_all_timesteps:
+            x_1 = self.unnormalize(torch.clamp(x_t, -1., 1.))
+            return x_1
+        else:
+            clip = partial(torch.clamp, min=-1, max=1.)
+            all_timesteps = list(map(clip, all_timesteps))
+            return all_timesteps
         
     def forward(self, x_0):
         loss = self.algorithm1(x_0)
