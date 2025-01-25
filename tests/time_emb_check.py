@@ -30,3 +30,9 @@ if __name__ == '__main__':
         # Euclidean Distance
         dist_e = torch.pow(emb[i] - emb[i+1], 2).sum()
         print(f"Distance: {dist_m.item():.2f}, {dist_e.item():.2f}")
+    
+    # Get One Embedding
+    t = torch.tensor([100], dtype=torch.int64)
+    pos_emb = SinusoidalPosEmbedding(dim=256)
+    print(t)
+    print(pos_emb(t).shape)
