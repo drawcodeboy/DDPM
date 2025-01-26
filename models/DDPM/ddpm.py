@@ -8,9 +8,14 @@ from .unet import UNet
 
 class DDPM(nn.Module):
     def __init__(self,
-                 time_steps: int = 1000,
-                 beta_schedule: str = 'linear',
-                 device: str = 'cuda'):
+                 time_steps: int = 1000, # DDPM
+                 beta_schedule: str = 'linear', # DDPM
+                 input_dim:int = 1, # U-Net
+                 init_dim:int = 1, # U-Net
+                 dim_mults:Tuple = (1, 2, 4, 8), # U-Net
+                 time_emb_dim:int = 16, # U-Net
+                 dropout_rate:float = 0., # U-Net
+                 device: str = 'cuda'): # Overall
         super().__init__()
         
         # 1) Alpha & Beta Settings
@@ -40,7 +45,11 @@ class DDPM(nn.Module):
         self.time_steps = time_steps
         
         # 4) Get Model (U-Net)
-        self.model = UNet()
+        self.model = UNet(input_dim=input_dim,
+                          init_dim=init_dim,
+                          dim_mults=dim_mults,
+                          time_emb_dim=time_emb_dim,
+                          dropout_rate=dropout_rate)
         
         # Extra
         self.device = device
