@@ -4,6 +4,8 @@ from torch import nn
 from typing import Tuple
 
 from .residual_block import ResidualBlock
+from .attention import Attention
+from .up_down import DownSample, UpSample
 
 class UNet(nn.Module):
     def __init__(self,
@@ -11,27 +13,34 @@ class UNet(nn.Module):
                  init_dim:int, # Start with this dimension, it effects on overall model dimension
                  dim_mults:Tuple = (1, 2, 4, 8),
                  time_emb_dim:int = 16,
+                 attn_emb_dim:int = 32,
+                 attn_heads:int = 4,
                  dropout_rate:float = 0., # In CIFAR 10, 0.2
                  ):
         super().__init__()
         
         # [1] Determine Comprehensive Dimensions
-        
-        # Start with this dimension init_dim
+        # [1.1] Start with this dimension init_dim
         self.init_conv = nn.Conv2d(input_dim, init_dim, 7, padding = 3)
         
+        # [1.2] U-Net Dimension per stage
         # In U-Net, the depth of the feature map doubles as it moves through the contracting path 
         # starting from the initial dimension(init_dim), and this operation is performed for this reason.
         dims = [init_dim, *map(lambda m: init_dim * m, dim_mults)]
         
         in_out = list(zip(dims[:-1], dims[1:])) # pair(idx: 0~3, idx: 1:4)
         
+        # [1.3] Attention information
+        attn_emb_dim_per_stage = (attn_emb_dim,) * len(dim_mults)
+        attn_heads_per_stage = (attn_heads,) * len(dim_mults)
+        attn_infos_per_stage = list(zip(attn_emb_dim_per_stage, attn_heads_per_stage))
+        
         # [2] Layers
         # [2.1] Contracting Path
         self.downs = nn.ModuleList()
         
-        for (dim_in, dim_out) in in_out:
-            self.downs.append(nn.ModuleList(
+        for (dim_in, dim_out), (attn_emb_dim, attn_heads) in zip(in_out, attn_infos_per_stage):
+            self.downs.append(nn.ModuleList([
                 ResidualBlock(dim_in=dim_in, 
                               dim_out=dim_in,
                               time_emb_dim=time_emb_dim,
@@ -40,9 +49,25 @@ class UNet(nn.Module):
                               dim_out=dim_in,
                               time_emb_dim=time_emb_dim,
                               dropout_rate=dropout_rate),
-                
-            ))
+                Attention(dim_in=dim_in,
+                          attn_emb_dim=attn_emb_dim,
+                          attn_heads=attn_heads,
+                          dropout_rate=dropout_rate),
+                DownSample(dim=dim_in)
+            ]))
         
+        # [2.2] Mid
+        mid_dim = dims[-1]
+        self.mid = nn.ModuleList([ResidualBlock(mid_dim, mid_dim),
+                                  Attention(dim_in=mid_dim,
+                                            attn_emb_dim=attn_emb_dim_per_stage[-1],
+                                            attn_heads=attn_heads_per_stage[-1],
+                                            dropout_rate=dropout_rate),
+                                  ResidualBlock(mid_dim, mid_dim)])
+        
+        # [2.3] Expanding Path
+        
+        # [2.4] Final
     
     def forward(self, x, t):
         return x
