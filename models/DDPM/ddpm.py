@@ -3,6 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 
 from einops import reduce
+from typing import Tuple
 
 from .unet import UNet
 
