@@ -11,5 +11,7 @@ from models import load_model
 if __name__ == '__main__':
     with open('config.yaml') as f:
         cfg = yaml.full_load(f)
-    cfg = yaml.full_load()
-    model = load_model(name)
+    model_cfg = cfg['model']
+    model = load_model(**model_cfg)
+    
+    print(model)
