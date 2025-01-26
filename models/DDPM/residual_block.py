@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 
 __all__ = ['ResidualBlock']
 
-class RMSNorm(Module):
+class RMSNorm(nn.Module):
     # RMS Normalization is more simple than Group Normalization
     # However, that reasoning does not justify replacing Group Norm with RMS Norm. 
     # The EDM2 paper revealed that Group Norm did not perform well.
