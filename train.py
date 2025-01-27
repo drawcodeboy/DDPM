@@ -1,15 +1,22 @@
-import yaml
-from datasets import load_dataset
-from models import load_model, load_loss_fn
-from utils import *
-
 import torch
 from torch import optim
 
+import yaml
 import time
+import argparse
+
+from datasets import load_dataset
+from models import load_model
+from utils import *
+
+def add_args_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--config', type=str, default='small')
+    
+    return parser
 
 def main(cfg):
-    print(f"=================[{cfg['expr']}]=================")
+    print(f"=====================[{cfg['expr']}]=====================")
     
     # Device Setting
     device = None
@@ -27,20 +34,14 @@ def main(cfg):
                             mode=cfg['data']['mode'])
     train_dl = torch.utils.data.DataLoader(train_ds, 
                                            shuffle=True,
-                                           batch_size=hp_cfg['batch_size'])
+                                           batch_size=hp_cfg['batch_size'],
+                                           drop_last=True)
     print(f"Load Dataset {data_cfg['dataset']}")
     
     # Load Model
     model_cfg = cfg['model']
-    model = load_model(model=model_cfg['name'],
-                       latent_size=model_cfg['latent_size'],
-                       x_size=tuple(model_cfg['x_size'])).to(device)
+    model = load_model(**model_cfg).to(device)
     print(f"Load Model {model_cfg['name']}")
-    
-    # Load Loss function
-    loss_fn = load_loss_fn(loss_fn=cfg['loss_fn'],
-                           latent_size=model_cfg['latent_size']).to(device)
-    print(f"Load Loss function {cfg['loss_fn']}")
     
     # Load Optimizer
     optimizer = None
@@ -64,19 +65,22 @@ def main(cfg):
     
     # Train
     total_train_loss = []
+    total_steps = 0
     total_start_time = int(time.time())
     
     for current_epoch in range(1, hp_cfg['epochs']+1):
         print("======================================================")
-        print(f"Epoch: [{current_epoch:03d}/{hp_cfg['epochs']:03d}]\n")
+        print(f"Epoch: [{current_epoch:03d}/{hp_cfg['epochs']:03d}] ({len(train_dl):04d} Steps per Epoch)\n")
         
         # Training One Epoch
         start_time = int(time.time())
-        train_loss = train_one_epoch(model, train_dl, loss_fn, optimizer, scheduler, device)
+        train_loss = train_one_epoch(model, train_dl, None, optimizer, scheduler, device)
         elapsed_time = int(time.time()) - start_time
         print(f"Train Time: {elapsed_time//60:02d}m {elapsed_time%60:02d}s\n")
+        total_steps += len(train_dl)
+        print(f"Train Steps: {total_steps:04d}")
         
-        if current_epoch % 10 == 0:
+        if current_epoch % 5 == 0:
             save_model_ckpt(model_cfg['name'], data_cfg['dataset'], current_epoch,
                             model, cfg['save_path'])
 
@@ -87,7 +91,10 @@ def main(cfg):
     print(f"<Total Train Time: {total_elapsed_time//60:02d}m {total_elapsed_time%60:02d}s>")
     
 if __name__ == '__main__':
-    with open('config.yaml') as f:
+    parser = argparse.ArgumentParser('training DDPM', parents=[add_args_parser()])
+    args = parser.parse_args()
+    
+    with open(f'config/train.{args.config}.yaml') as f:
         cfg = yaml.full_load(f)
     
     main(cfg)
