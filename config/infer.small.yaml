@@ -18,4 +18,4 @@ model:
 
 save_path: saved
 
-load_weights: ddpm.mnist.0001482steps.pth
+load_weights: ddpm.mnist.0002262steps.pth
