@@ -11,7 +11,7 @@ from .time_embedding import SinusoidalPosEmbedding
 class UNet(nn.Module):
     def __init__(self,
                  input_dim:int, # Input Data Dimension
-                 init_dim:int = 4, # Start with this dimension, it effects on overall model dimension
+                 init_dim:int = 1, # Start with this dimension, it effects on overall model dimension
                  dim_mults:Tuple = (1, 2, 4, 8),
                  time_emb_dim:int = 16, # Not origin dimension, this dimension is after pass through Time MLP 
                  time_emb_theta:int = 10000,
@@ -41,7 +41,7 @@ class UNet(nn.Module):
         # [2.1] Contracting Path
         self.downs = nn.ModuleList()
         
-        for idx, (dim_in, dim_out), (attn_emb_dim, attn_heads) in enumerate(zip(in_out, attn_infos_per_stage)):
+        for idx, ((dim_in, dim_out), (attn_emb_dim, attn_heads)) in enumerate(zip(in_out, attn_infos_per_stage)):
             is_last = (idx == len(in_out) - 1)
             self.downs.append(nn.ModuleList([
                 ResidualBlock(dim_in=dim_in, 
@@ -73,7 +73,7 @@ class UNet(nn.Module):
         # [2.3] Expanding Path
         self.ups = nn.ModuleList()
         
-        for idx, (dim_in, dim_out), (attn_emb_dim, attn_heads) in enumerate(zip(*map(reversed, (in_out, attn_infos_per_stage)))):
+        for idx, ((dim_in, dim_out), (attn_emb_dim, attn_heads)) in enumerate(zip(*map(reversed, (in_out, attn_infos_per_stage)))):
             is_last = (idx == len(in_out) - 1)
             self.ups.append(nn.ModuleList([
                 ResidualBlock(dim_in=dim_out+dim_in, # Previous layer + Skip
@@ -94,7 +94,7 @@ class UNet(nn.Module):
             ]))
         
         # [2.4] Final
-        self.final = nn.ModuleList([ResidualBlock(dim_in=dims[1], # equals to init_dim, but explicitly
+        self.final = nn.ModuleList([ResidualBlock(dim_in=init_dim * 2,
                                                   dim_out=init_dim,
                                                   dropout_rate=dropout_rate),
                                     nn.Conv2d(init_dim, input_dim, 1)])
@@ -105,7 +105,7 @@ class UNet(nn.Module):
         # Therefore, the dimensionality of the original Time Embedding must be defined. 
         # Here, it is set to init_dim * 4.
         time_emb_origin_dim = init_dim * 4
-        self.time_mlp = nn.Sequential(SinusodialPosEmbedding(dim=time_emb_origin_dim,
+        self.time_mlp = nn.Sequential(SinusoidalPosEmbedding(dim=time_emb_origin_dim,
                                                              theta=time_emb_theta),
                                       nn.Linear(time_emb_origin_dim, time_emb_dim),
                                       nn.GELU(),
