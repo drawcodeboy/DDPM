@@ -15,3 +15,10 @@ if __name__ == '__main__':
     model = load_model(**model_cfg)
     
     print(model)
+    
+    loss = model.algorithm1(torch.randn(1, 1, 16, 16))
+    
+    total_sum = 0
+    for params in model.parameters():
+        total_sum += params.numel()
+    print(f"Model Parameters: {total_sum}")
