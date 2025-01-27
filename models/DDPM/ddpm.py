@@ -137,7 +137,7 @@ class DDPM(nn.Module):
         return x_t_minus_one
     
     @torch.inference_mode()
-    def algorithm_2(self, shape, get_all_timesteps=False):
+    def algorithm2(self, shape, get_all_timesteps=False):
         '''
             Usage: model.algorithm2()
             shape: output.shape you want. if shape is [4, 3, 128, 128], 4 images that [3, 128, 128] shape.
