@@ -26,3 +26,5 @@ hyperparams:
   weight_decay: 0.
   epochs: 100
   batch_size: 128
+
+save_path: saved
