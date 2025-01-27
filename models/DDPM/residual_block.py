@@ -4,6 +4,8 @@ import torch.nn.functional as F
 
 from typing import Optional, Tuple
 
+from einops import rearrange
+
 from .rms_norm import RMSNorm
 
 __all__ = ['ResidualBlock']
@@ -58,17 +60,17 @@ class ResidualBlock(nn.Module):
         
         # for Residual connection
         self.residual_conv = nn.Conv2d(dim_in, dim_out, 1) if dim_in != dim_out else nn.Identity()
-    
+        
     def forward(self, x, time_emb = None):
-        res = x.clone()
+        r = x.clone()
         
         scale_shift = None
         if (self.time_emb_mlp is not None) and (time_emb is not None):
             scale_shift = self.time_emb_mlp(time_emb)
-            scale_shift = rearrange(time_emb, 'b c -> b c 1 1')
+            scale_shift = rearrange(scale_shift, 'b c -> b c 1 1')
             scale_shift = scale_shift.chunk(2, dim=1)
         
         x = self.block1(x, scale_shift=scale_shift)
         x = self.block2(x)
         
-        return x + self.residual_conv(res)
+        return x + self.residual_conv(r)
