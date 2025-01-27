@@ -94,7 +94,7 @@ class UNet(nn.Module):
             ]))
         
         # [2.4] Final
-        self.final = nn.ModuleList([ResidualBlock(dim_in=init_dim * 2,
+        self.final = nn.ModuleList([ResidualBlock(dim_in=init_dim * 2, # for residual connection, x = torch.cat((x, r), dim=1)
                                                   dim_out=init_dim,
                                                   dropout_rate=dropout_rate),
                                     nn.Conv2d(init_dim, input_dim, 1)])
