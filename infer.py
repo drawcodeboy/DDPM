@@ -33,6 +33,7 @@ def main(cfg, args):
     ckpt = torch.load(os.path.join(cfg['save_path'], cfg['load_weights']),
                       weights_only=False)
     model.load_state_dict(ckpt['model'])
+    model.eval()
     print(f"Load Model {model_cfg['name']}")
     
     timesteps = model.algorithm2(shape=[1, 1, 28, 28],
