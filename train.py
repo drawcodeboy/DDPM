@@ -80,8 +80,8 @@ def main(cfg):
         total_steps += len(train_dl)
         print(f"Train Steps: {total_steps:04d}")
         
-        if current_epoch % 5 == 0:
-            save_model_ckpt(model_cfg['name'], data_cfg['dataset'], current_epoch,
+        if current_epoch % 1 == 0:
+            save_model_ckpt(model_cfg['name'], data_cfg['dataset'], current_epoch, len(train_dl),
                             model, cfg['save_path'])
 
         total_train_loss.append(train_loss)

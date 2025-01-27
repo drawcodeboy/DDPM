@@ -6,6 +6,7 @@ import re
 def save_model_ckpt(model_name,
                     dataset,
                     current_epoch,
+                    steps_per_epochs,
                     model,
                     save_path,
                     leave_best=False):
@@ -14,7 +15,7 @@ def save_model_ckpt(model_name,
     
     ckpt = {}
     ckpt['model'] = model.state_dict()
-    ckpt['epochs'] = current_epoch
+    ckpt['steps'] = steps_per_epoch * current_epoch
     
     # 이전 Epoch를 제거하기 위함
     if leave_best==True:
@@ -34,7 +35,7 @@ def save_model_ckpt(model_name,
                     # 현재 epoch 수보다 적으면 제거
                     os.remove(os.path.join(save_path, prev_pth))
     
-    state_dict_name = f'{model_name}.{dataset}.{current_epoch:03d}epochs.pth'
+    state_dict_name = f'{model_name}.{dataset}.{steps_per_epoch * current_epoch:07d}steps.pth'
     
     try:
         torch.save(ckpt, os.path.join(save_path, state_dict_name))
