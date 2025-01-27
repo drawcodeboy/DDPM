@@ -8,8 +8,17 @@ data:
 
 model:
   name: DDPM
-  time_steps: 1000
-  beta_schedule: linear
+  time_steps: 1000 # DDPM
+  beta_schedule: linear # DDPM
+  input_dim: 1 # U-Net
+  init_dim: 1 # U-Net
+  dim_mults: !!python/tuple [1, 2, 4, 8] # U-Net
+  time_emb_theta: 10000 # U-Net
+  time_emb_dim: 16 # U-Net
+  attn_emb_dim: 32 # U-Net
+  attn_heads: 4 # U-Net
+  dropout_rate: 0. # U-Net
+  device: cuda # Overall
 
 hyperparams:
   optim: Adam
