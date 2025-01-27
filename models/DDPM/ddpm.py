@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 from einops import reduce
 from typing import Tuple
+from functools import partial
 
 from .unet import UNet
 
@@ -132,12 +133,12 @@ class DDPM(nn.Module):
         t_ = torch.full((x_t.shape[0],), t, device=self.device, dtype=torch.int64)
         noise_pred = self.model(x_t, t_)
         x_t_minus_one = (1/self.sqrt_alphas[t]) * (x_t-(self.one_minus_alphas[t]/self.sqrt_one_minus_alphas_cumprod[t])*noise_pred)
-        x_t_minus_one += self.variance * noise
+        x_t_minus_one += self.variance[t] * z
         
         return x_t_minus_one
     
     @torch.inference_mode()
-    def algorithm2(self, shape, get_all_timesteps=False):
+    def algorithm2(self, shape, get_all_timesteps=False, verbose=False):
         '''
             Usage: model.algorithm2()
             shape: output.shape you want. if shape is [4, 3, 128, 128], 4 images that [3, 128, 128] shape.
@@ -159,6 +160,9 @@ class DDPM(nn.Module):
                 x_t = self.sample(x_t, t)
             
             all_timesteps.append(x_t)
+            if verbose == True:
+                print(f"\rGet Time Steps: [{t:04d}] -> [{t-1:04d}]", end="") # Actually, Predict from t to t-1
+        if verbose == True: print()
         
         # [5] end for, [6] return x_0 (x_1 for discrete decoder)
         if not get_all_timesteps:
