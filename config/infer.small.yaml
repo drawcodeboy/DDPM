@@ -2,10 +2,6 @@ expr: Experiment
 
 device: cpu
 
-data:
-  dataset: MNIST
-  mode: train # should consider train or test!
-
 model:
   name: DDPM
   time_steps: 1000 # DDPM
@@ -20,9 +16,6 @@ model:
   dropout_rate: 0.2 # U-Net
   device: cpu # Overall
 
-hyperparams:
-  optim: Adam
-  lr: 0.0002
-  weight_decay: 0.
-  epochs: 100
-  batch_size: 64
+save_path: saved
+
+load_weights: ddpm.mnist.010epochs.pth
