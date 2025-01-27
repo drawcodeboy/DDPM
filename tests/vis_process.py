@@ -13,7 +13,7 @@ from models import load_model
 from datasets import load_dataset
 
 if __name__ == '__main__':
-    with open('config.yaml') as f:
+    with open('config/train.small.yaml') as f:
         cfg = yaml.full_load(f)
     model_cfg = cfg['model']
 
