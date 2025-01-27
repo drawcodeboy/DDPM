@@ -9,8 +9,8 @@ class DownSample(nn.Module):
         
         self.down = None
         if contract == True:
-            self.down = nn.Sequential(Rearrange('b c (h p1) (w p2) -> b c h w', p1=2, p2=2),
-                                      nn.Conv2d(dim_in, dim_out, 3, padding=1))
+            self.down = nn.Sequential(Rearrange('b c (h p1) (w p2) -> b (c p1 p2) h w', p1=2, p2=2),
+                                      nn.Conv2d(4*dim_in, dim_out, 3, padding=1))
         else:
             self.down = nn.Conv2d(dim_in, dim_out, 3, padding=1)
     
