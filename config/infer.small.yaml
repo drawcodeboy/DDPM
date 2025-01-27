@@ -13,7 +13,7 @@ model:
   time_emb_dim: 8 # U-Net
   attn_emb_dim: 8 # U-Net
   attn_heads: 2 # U-Net
-  dropout_rate: 0.2 # U-Net
+  dropout_rate: 0. # U-Net
   device: cpu # Overall
 
 save_path: saved
