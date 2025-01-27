@@ -6,7 +6,7 @@ import re
 def save_model_ckpt(model_name,
                     dataset,
                     current_epoch,
-                    steps_per_epochs,
+                    steps_per_epoch,
                     model,
                     save_path,
                     leave_best=False):
