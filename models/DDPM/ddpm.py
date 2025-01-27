@@ -121,11 +121,13 @@ class DDPM(nn.Module):
         
         return loss.mean()
 
+    '''
+    # This function stems from a misunderstanding of Equation 4 in Algorithm 2. 
+    # To compute the mean from the noise, it is necessary to calculate x_0
+    # from the predicted noise and use it to derive the mean, 
+    # rather than deriving it directly in an intuitive manner as described in the paper.
     @torch.inference_mode()
     def sample(self, x_t, t):
-        '''
-            t: int, in algorithm_2 for statement
-        '''
         # [3] z ~ N(0, I)
         z = torch.randn_like(x_t)
         
@@ -136,6 +138,7 @@ class DDPM(nn.Module):
         x_t_minus_one += self.variance[t] * z
         
         return x_t_minus_one
+    '''
     
     @torch.inference_mode()
     def algorithm2(self, shape, get_all_timesteps=False, verbose=False):
@@ -146,18 +149,14 @@ class DDPM(nn.Module):
         # Sampling
         
         # [1] x_T ~ N(0, I)
-        x_T = torch.randn(shape, device = self.device)
+        x_t = torch.randn(shape, device = self.device)
         
-        all_timesteps = [torch.clamp(x_T, -1., 1.)] # for visualize, torch.clamp()
+        all_timesteps = [torch.clamp(x_t, -1., 1.)] # for visualize, torch.clamp()
         
         # [2] for t = T,...,1 do (without 1)
-        x_t = None
         for t in range(self.time_steps-1, 1, -1): # [self.timesteps-1, 2], time step 1 for discrete decoder.
             # [3], [4] sampling z, and get x_{t-1}
-            if t == self.time_steps - 1:
-                x_t = self.sample(x_T, t)
-            else:
-                x_t = self.sample(x_t, t)
+            x_t = self.sample(x_t, t)
             
             all_timesteps.append(x_t)
             if verbose == True:
@@ -171,6 +170,7 @@ class DDPM(nn.Module):
         else:
             clip = partial(torch.clamp, min=-1, max=1.)
             all_timesteps = list(map(clip, all_timesteps))
+            all_timesteps = list(map(self._unnormalize, all_timesteps))
             return all_timesteps
         
     def forward(self, x_0):
@@ -180,12 +180,14 @@ class DDPM(nn.Module):
         
     def view(self, x_0):
         # view forward or reverse process (that depends on post-processing)
+        x_0 = self._normalize(x_0)
         noise = torch.randn_like(x_0)
-        noise = F.sigmoid(noise) # for visualize, scaling [0, 1]
         
         x_0_coef = self.sqrt_alphas_cumprod.reshape(-1, 1, 1, 1)
         noise_coef = self.sqrt_one_minus_alphas_cumprod.reshape(-1, 1, 1, 1)
         
         x_t = x_0_coef * x_0 + noise_coef * noise
-        x_t = torch.clamp(x_t, min=0., max=1.) # for visualize, min-max clamp
+        x_t = torch.clamp(x_t, min=-1., max=1.) # for visualize, min-max clamp
+        
+        x_t = self._unnormalize(x_t)
         return x_t
