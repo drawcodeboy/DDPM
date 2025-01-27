@@ -14,7 +14,10 @@ class DDPM(nn.Module):
                  input_dim:int = 1, # U-Net
                  init_dim:int = 1, # U-Net
                  dim_mults:Tuple = (1, 2, 4, 8), # U-Net
+                 time_emb_theta:int = 10000, # U-Net
                  time_emb_dim:int = 16, # U-Net
+                 attn_emb_dim:int = 32, # U-Net
+                 attn_heads:int = 4, # U-Net
                  dropout_rate:float = 0., # U-Net
                  device: str = 'cuda'): # Overall
         super().__init__()
