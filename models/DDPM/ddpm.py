@@ -160,18 +160,18 @@ class DDPM(nn.Module):
         
         # Get x_0 from noise_pred and x_t
         x_0 = self._extract(self.sqrt_recip_alphas_cumprod, t, x_t.shape) * x_t
-        x_0 -= self._extract(self.sqrt_recipm1_alphas_cumprod, t, x_t.shape) * noise
+        x_0 -= self._extract(self.sqrt_recipm1_alphas_cumprod, t, x_t.shape) * noise_pred
         
         return x_0
     
     def q_posterior(self, x_0, x_t, t):
         # KEY POINT, Get posterior mean using x_0, x_t
-        posterior_mean = extract(self.posterior_mean_coef1, t, x_t.shape) * x_0
-        posterior_mean += extract(self.posterior_mean_coef2, t, x_t.shape) * x_t
+        posterior_mean = self._extract(self.posterior_mean_coef1, t, x_t.shape) * x_0
+        posterior_mean += self._extract(self.posterior_mean_coef2, t, x_t.shape) * x_t
         
         # Variance is fixed value
-        posterior_var = extract(self.posterior_var, t, x_t.shape)
-        posterior_log_var_clipped = extract(self.posterior_log_var_clipped, t, x_t.shape)
+        posterior_var = self._extract(self.posterior_var, t, x_t.shape)
+        posterior_log_var_clipped = self._extract(self.posterior_log_var_clipped, t, x_t.shape)
         
         return posterior_mean, posterior_var, posterior_log_var_clipped
     
@@ -181,7 +181,7 @@ class DDPM(nn.Module):
         # And, x_0 can be acquired by x_t, t, noise which from model prediction
         x_0 = self.get_x_0_from_model_noise_pred(x_t, t)
         
-        p_mean, p_var, p_log_var = self.q_posterior(x_zero=x_0, x_t=x_t, t=t)
+        p_mean, p_var, p_log_var = self.q_posterior(x_0=x_0, x_t=x_t, t=t)
         return p_mean, p_var, p_log_var
     
     @torch.inference_mode()
@@ -193,7 +193,7 @@ class DDPM(nn.Module):
         t_ = torch.full((x_t.shape[0],), t, device=self.device, dtype=torch.int64)
         
         # this is KEY POINT!
-        p_mean, _, p_log_var = self.p_mean_variance(x=x_t, t=t_)
+        p_mean, p_var, p_log_var = self.p_mean_variance(x_t=x_t, t=t_)
         x_t_minus_one = p_mean + (0.5 * p_log_var).exp() * z
         
         return x_t_minus_one
