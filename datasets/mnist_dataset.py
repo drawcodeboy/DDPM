@@ -5,8 +5,8 @@ import numpy as np
 
 class MNIST_Dataset():
     def __init__(self,
-                 root="data/", # data 하위에 MNIST 디렉터리 생김
-                 download=True, # root로 지정한 위치에 없으면 다운, 있으면 패스
+                 root="data/", # make MNIST directory below data/
+                 download=True, # download if there is no data, else pass
                  mode='train'): 
         
         if mode not in ['train', 'test']:
