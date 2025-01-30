@@ -3,7 +3,7 @@ expr: Experiment
 device: cuda
 
 data:
-  dataset: # choose
+  dataset: MNIST # choose
   mode: train # should consider train or test!
 
 model:
@@ -11,20 +11,20 @@ model:
   time_steps: 1000 # DDPM
   beta_schedule: linear # DDPM
   input_dim: 1 # U-Net
-  init_dim: 32 # U-Net
-  dim_mults: !!python/tuple [1, 2, 4, 8] # U-Net
+  init_dim: 64 # U-Net
+  dim_mults: !!python/tuple [1, 2, 4] # U-Net
   time_emb_theta: 10000 # U-Net
-  time_emb_dim: 16 # U-Net
+  time_emb_dim: 32 # U-Net
   attn_emb_dim: 32 # U-Net
   attn_heads: 4 # U-Net
-  dropout_rate: 0. # U-Net
+  dropout_rate: 0.2 # U-Net
   device: cuda # Overall
 
 hyperparams:
   optim: Adam
   lr: 0.0002
   weight_decay: 0.
-  epochs: 100
+  epochs: 100 # 3900 steps, when batch size 128
   batch_size: 128
 
 save_path: saved

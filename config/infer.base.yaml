@@ -1,21 +1,21 @@
 expr: Experiment
 
-device: cpu
+device: cuda
 
 model:
   name: DDPM
   time_steps: 1000 # DDPM
   beta_schedule: linear # DDPM
   input_dim: 1 # U-Net
-  init_dim: 2 # U-Net
+  init_dim: 64 # U-Net
   dim_mults: !!python/tuple [1, 2, 4] # U-Net
   time_emb_theta: 10000 # U-Net
-  time_emb_dim: 8 # U-Net
-  attn_emb_dim: 8 # U-Net
-  attn_heads: 2 # U-Net
-  dropout_rate: 0. # U-Net
-  device: cpu # Overall
+  time_emb_dim: 32 # U-Net
+  attn_emb_dim: 32 # U-Net
+  attn_heads: 4 # U-Net
+  dropout_rate: 0.2 # U-Net
+  device: cuda # Overall
 
 save_path: saved
 
-load_weights: ddpm.mnist.0001872steps.pth
+load_weights: ddpm.mnist.0003900steps.pth
