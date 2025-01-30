@@ -11,6 +11,7 @@ data/*
 # saved
 saved/*
 !saved/temp.txt
+!saved/ddpm.mnist.0003900steps.pth
 
 # Virtual Environment
 .venv/
