@@ -2,8 +2,7 @@
 
 ## Preview
 <p align="center">
-    <img src="./figures/DDPM_4.gif" width="20%" height="20%">
-    <img src="./figures/DDPM_9.gif" width="20%" height="20%">
+    <img src="./figures/DDPM_4.gif" width="40%" height="40%">
 </p>
 
 ## Description
