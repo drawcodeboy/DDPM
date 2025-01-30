@@ -11,7 +11,7 @@ from utils import *
 
 def add_args_parser():
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('--config', type=str, default='small')
+    parser.add_argument('--config', type=str, default='base')
     
     return parser
 
@@ -24,6 +24,7 @@ def main(cfg):
         device = cfg['device']
     else:
         device = 'cpu'
+    print(f"device: {device}")
     
     # Hyperparameter Settings
     hp_cfg = cfg['hyperparams']
@@ -60,7 +61,7 @@ def main(cfg):
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,
                                                      mode='min',
                                                      factor=0.5,
-                                                     patience=5,
+                                                     patience=7,
                                                      min_lr=1e-6)
     
     # Train

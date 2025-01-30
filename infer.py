@@ -14,7 +14,7 @@ from utils import *
 def get_args_parser():
     parser = argparse.ArgumentParser(add_help=False)
     
-    parser.add_argument('--config', type=str, default='small')
+    parser.add_argument('--config', type=str, default='base')
     return parser
 
 def main(cfg, args):
