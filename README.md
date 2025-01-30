@@ -1,9 +1,13 @@
 # DDPM Implementation with PyTorch
 
+## Preview
+<p align="center">
+    <img src="./figures/DDPM_4.gif" width="20%" height="20%">
+    <img src="./figures/DDPM_9.gif" width="20%" height="20%">
+</p>
+
 ## Description
 * The <code>tests</code> directory is created to check if the functions of DDPM are working properly and for analysis purposes.
-
-## Preview
 
 ## Setting
 ```
