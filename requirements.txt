@@ -1,5 +1,8 @@
-torch==2.5.1
-torchvision==0.20.1
 pyyaml==6.0.2
 einops==0.8.0
 opencv-python==4.11.0.86
+
+--extra-index-url https://download.pytorch.org/whl/cu118
+torch==2.5.0
+--extra-index-url https://download.pytorch.org/whl/cu118
+torchvision==0.20.0
