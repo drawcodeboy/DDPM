@@ -111,11 +111,8 @@ class DDPM(nn.Module):
         # i.e., the "INTERVAL AND SCALE EQUIVALENCE," rather than 
         # requiring exact corresponding values for each step.
         
-        # But, I actually range of torch.randint() is [1, 999].
-        # This is because, 3.3 in DDPM Paper, L_0 is discrete decoder has to deal with it.
-        # So, I didn't sampling time step 1.
         bz = x_0.shape[0] # Batch Size
-        t = torch.randint(1, self.time_steps, (bz,), device=x_0.device, dtype=torch.int64) # [0, self.time_steps - 1]
+        t = torch.randint(0, self.time_steps, (bz,), device=x_0.device, dtype=torch.int64) # [0, self.time_steps - 1]
         
         # [4] Noise(Epsilon) ~ N(0,I)
         noise = torch.randn_like(x_0) # I = Identity matrix(Covariance Matrix)
@@ -160,7 +157,8 @@ class DDPM(nn.Module):
         
         # this is KEY POINT!
         p_mean, p_var, p_log_var = self.p_mean_variance(x_t=x_t, t=t_)
-        x_t_minus_one = p_mean + (0.5 * p_log_var).exp() * z
+
+        x_t_minus_one = p_mean + ((0.5 * p_log_var).exp() * z if t != 0 else 0)
         
         if clip_scaled:
             # It guarantees sampling quality.
@@ -182,8 +180,8 @@ class DDPM(nn.Module):
         
         all_timesteps = [torch.clamp(x_t, -1., 1.)] # for visualize, torch.clamp()
         
-        # [2] for t = T,...,1 do (without 1)
-        for t in range(self.time_steps-1, 1, -1): # [self.timesteps-1, 2], time step 1 for discrete decoder.
+        # [2] for t = T,...,1 do 
+        for t in range(self.time_steps-1, 0, -1): # [self.timesteps-1, 1], time step 1 for discrete decoder.
             # [3], [4] sampling z, and get x_{t-1}
             x_t = self.sample(x_t, t)
             
