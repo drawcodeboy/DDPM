@@ -64,7 +64,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(parents=[get_args_parser()])
     args = parser.parse_args()
     
-    with open(f'config/infer.{args.config}.yaml') as f:
+    with open(f'configs/infer.{args.config}.yaml') as f:
         cfg = yaml.full_load(f)
     
     main(cfg, args)

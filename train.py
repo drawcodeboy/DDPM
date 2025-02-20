@@ -95,7 +95,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('training DDPM', parents=[add_args_parser()])
     args = parser.parse_args()
     
-    with open(f'config/train.{args.config}.yaml') as f:
+    with open(f'configs/train.{args.config}.yaml') as f:
         cfg = yaml.full_load(f)
     
     main(cfg)
