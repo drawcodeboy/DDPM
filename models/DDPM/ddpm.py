@@ -192,7 +192,7 @@ class DDPM(nn.Module):
         
         # [5] end for, [6] return x_0 (x_1 for discrete decoder)
         if not get_all_timesteps:
-            x_1 = self.unnormalize(torch.clamp(x_t, -1., 1.))
+            x_1 = self._unnormalize(torch.clamp(x_t, -1., 1.))
             return x_1
         else:
             clip = partial(torch.clamp, min=-1, max=1.)
